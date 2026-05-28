@@ -1,19 +1,28 @@
 #!/usr/bin/env node
 /**
- * validate-lian-dan-lu.mjs 鈥?鐐间腹鐐?HTML PPT 鑷姩鏍￠獙鑴氭湰
+ * validate-lian-dan-lu.mjs — 炼丹炉 HTML PPT 自动校验脚本
  *
- * 鐢ㄩ€旓細鍦?Phase 4 浜や粯鍓嶈嚜鍔ㄦ牎楠?P0 娓呭崟锛岄伩鍏嶄汉宸ラ€愭潯妫€鏌ラ仐婕忋€? * 鐢ㄦ硶锛歯ode scripts/validate-lian-dan-lu.mjs <path/to/ppt.html>
- * 杈撳嚭锛氱粓绔僵鑹叉姤鍛?+ 杩涚▼閫€鍑虹爜锛?=鍏ㄩ儴閫氳繃锛?=鏈夊け璐ラ」锛? *
- * 妫€鏌ラ」鐩紙P0 绾у埆锛夛細
- *  1. 闆跺閮ㄤ緷璧栵紙鏃?CDN / Google Fonts / 澶栭儴 CSS/JS锛? *  2. 绯荤粺瀛椾綋鏍堬紙PingFang SC / Microsoft YaHei锛? *  3. 鍥哄畾鐢诲竷灏哄锛?60脳540 + 娣辫壊鑳屾櫙锛? *  4. 缈婚〉 JS 寮曟搸瀛樺湪
- *  5. 搴曢儴瀵艰埅鏍忓瓨鍦? *  6. 寰俊閫傞厤鏍峰紡锛坱ap-highlight / text-size-adjust / safe-area锛? *  7. 瀛楀彿浣跨敤 clamp()
- *  8. @media print 鎵撳嵃 CSS
- *  9. 浜や簰缁勪欢 CSS 绫诲悕瀹屾暣锛坒lip-card / reveal-box / step-reveal / poll-box锛? * 10. 鍔ㄧ敾 keyframes 瀹屾暣锛? 涓?+ stagger 瑙勫垯锛? */
+ * 用途：在 Phase 4 交付前自动校验 P0 清单，避免人工逐条检查遗漏。
+ * 用法：node scripts/validate-lian-dan-lu.mjs <path/to/ppt.html>
+ * 输出：终端彩色报告 + 进程退出码（0=全部通过，1=有失败项）
+ *
+ * 检查项目（P0 级别）：
+ *  1. 零外部依赖（无 CDN / Google Fonts / 外部 CSS/JS）
+ *  2. 系统字体栈（PingFang SC / Microsoft YaHei）
+ *  3. 固定画布尺寸（960×540 + 深色背景）
+ *  4. 翻页 JS 引擎存在
+ *  5. 底部导航栏存在
+ *  6. 微信适配样式（tap-highlight / text-size-adjust / safe-area）
+ *  7. 字号使用 clamp()
+ *  8. @media print 打印 CSS
+ *  9. 交互组件 CSS 类名完整（flip-card / reveal-box / step-reveal / poll-box）
+ * 10. 动画 keyframes 完整（7 个 + stagger 规则）
+ */
 
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-// 鈹€鈹€鈹€ 棰滆壊杈撳嚭 鈹€鈹€鈹€
+// ─── 颜色输出 ───
 const RED = '\x1b[31m';
 const GREEN = '\x1b[32m';
 const YELLOW = '\x1b[33m';
@@ -28,11 +37,11 @@ const failures = [];
 function check(name, condition, detail = '') {
   if (condition) {
     passCount++;
-    console.log(`  ${GREEN}鉁?{RESET} ${name}`);
+    console.log(`  ${GREEN}✓${RESET} ${name}`);
   } else {
     failCount++;
     failures.push({ name, detail });
-    console.log(`  ${RED}鉁?{RESET} ${name}${detail ? ' 鈥?' + detail : ''}`);
+    console.log(`  ${RED}✗${RESET} ${name}${detail ? ' — ' + detail : ''}`);
   }
 }
 
@@ -50,26 +59,27 @@ function hasCSSClass(content, className) {
   return isCSS(content, className) || content.includes(`class="${className}"`) || content.includes(`class='${className}'`);
 }
 
-// 鈹€鈹€鈹€ 涓婚€昏緫 鈹€鈹€鈹€
+// ─── 主逻辑 ───
 async function main() {
   const args = process.argv.slice(2);
   if (args.length === 0) {
-    console.error(`${RED}鐢ㄦ硶: node validate-lian-dan-lu.mjs <path/to/ppt.html>${RESET}`);
+    console.error(`${RED}用法: node validate-lian-dan-lu.mjs <path/to/ppt.html>${RESET}`);
     process.exit(2);
   }
 
   const filePath = resolve(args[0]);
-  console.log(`\n${BOLD}馃攳 鐐间腹鐐?PPT 鏍￠獙 鈥?${filePath}${RESET}\n`);
+  console.log(`\n${BOLD}🔍 炼丹炉 PPT 校验 — ${filePath}${RESET}\n`);
 
   let content;
   try {
     content = readFileSync(filePath, 'utf8');
   } catch (err) {
-    console.error(`${RED}鉁?鏃犳硶璇诲彇鏂囦欢: ${err.message}${RESET}`);
+    console.error(`${RED}✗ 无法读取文件: ${err.message}${RESET}`);
     process.exit(2);
   }
 
-  // 鎻愬彇鎵€鏈?<style> 鍧楀唴瀹?  const styleBlocks = [];
+  // 提取所有 <style> 块内容
+  const styleBlocks = [];
   const styleRegex = /<style[^>]*>([\s\S]*?)<\/style>/gi;
   let sm;
   while ((sm = styleRegex.exec(content)) !== null) {
@@ -77,7 +87,8 @@ async function main() {
   }
   const allCSS = styleBlocks.join('\n');
 
-  // 鎻愬彇鎵€鏈?<script> 鍧楀唴瀹?  const scriptBlocks = [];
+  // 提取所有 <script> 块内容
+  const scriptBlocks = [];
   const scriptRegex = /<script[^>]*>([\s\S]*?)<\/script>/gi;
   let scm;
   while ((scm = scriptRegex.exec(content)) !== null) {
@@ -85,7 +96,7 @@ async function main() {
   }
   const allJS = scriptBlocks.join('\n');
 
-  console.log(`${CYAN}鈺愨晲鈺?绗?1 缁勶細闆跺閮ㄤ緷璧栨鏌?鈺愨晲鈺?{RESET}`);
+  console.log(`${CYAN}═══ 第 1 组：零外部依赖检查 ═══${RESET}`);
 
   const CDN_PATTERNS = [
     'cdn.jsdelivr.net',
@@ -96,68 +107,68 @@ async function main() {
     'cdn.staticfile.org',
   ];
   const hasCDN = CDN_PATTERNS.some(p => content.includes(p));
-  check('鏃?CDN 璧勬簮寮曠敤锛坖sdelivr / unpkg / cdnjs / bootcdn锛?, !hasCDN,
-    hasCDN ? `妫€娴嬪埌 CDN: ${CDN_PATTERNS.filter(p => content.includes(p)).join(', ')}` : '');
+  check('无 CDN 资源引用（jsdelivr / unpkg / cdnjs / bootcdn）', !hasCDN,
+    hasCDN ? `检测到 CDN: ${CDN_PATTERNS.filter(p => content.includes(p)).join(', ')}` : '');
 
   const GOOGLE_PATTERNS = ['fonts.googleapis.com', 'fonts.gstatic.com', 'Google Font'];
   const hasGoogle = GOOGLE_PATTERNS.some(p => content.includes(p));
-  check('鏃?Google Fonts 寮曠敤', !hasGoogle,
-    hasGoogle ? '妫€娴嬪埌 Google Fonts 渚濊禆锛屼腑鍥藉鍐呮棤娉曞姞杞? : '');
+  check('无 Google Fonts 引用', !hasGoogle,
+    hasGoogle ? '检测到 Google Fonts 依赖，中国境内无法加载' : '');
 
   const EXT_CSS_JS = /<(?:link[^>]*href|script[^>]*src)=["']https?:\/\//i;
-  check('鏃犲閮?CSS/JS 寮曠敤锛堟墍鏈夋牱寮忓唴鑱旓級', !EXT_CSS_JS.test(content),
-    '妫€娴嬪埌澶栭儴 CSS/JS 寮曠敤');
+  check('无外部 CSS/JS 引用（所有样式内联）', !EXT_CSS_JS.test(content),
+    '检测到外部 CSS/JS 引用');
 
-  console.log(`\n${CYAN}鈺愨晲鈺?绗?2 缁勶細瀛椾綋涓庢牱寮忔鏌?鈺愨晲鈺?{RESET}`);
+  console.log(`\n${CYAN}═══ 第 2 组：字体与样式检查 ═══${RESET}`);
 
-  check('绯荤粺瀛椾綋鏍堬紙PingFang SC锛?, content.includes('PingFang SC'),
-    '缂哄皯 PingFang SC');
-  check('绯荤粺瀛椾綋鏍堬紙Microsoft YaHei锛?, content.includes('Microsoft YaHei'),
-    '缂哄皯 Microsoft YaHei 澶囬€夊瓧浣?);
+  check('系统字体栈（PingFang SC）', content.includes('PingFang SC'),
+    '缺少 PingFang SC');
+  check('系统字体栈（Microsoft YaHei）', content.includes('Microsoft YaHei'),
+    '缺少 Microsoft YaHei 备选字体');
 
-  console.log(`\n${CYAN}鈺愨晲鈺?绗?3 缁勶細甯冨眬涓庣敾甯冩鏌?鈺愨晲鈺?{RESET}`);
+  console.log(`\n${CYAN}═══ 第 3 组：布局与画布检查 ═══${RESET}`);
 
-  check('鍥哄畾鐢诲竷瀹藉害锛坢in(96vw, 960px) 鎴栫瓑鏁堬級',
+  check('固定画布宽度（min(96vw, 960px) 或等效）',
     allCSS.includes('min(96vw, 960px)') || allCSS.includes('min(96vw,960px)'),
-    '缂哄皯鍥哄畾鐢诲竷瀹藉害');
-  check('鍥哄畾鐢诲竷楂樺害锛坢in(90vh, 540px) 鎴栫瓑鏁堬級',
+    '缺少固定画布宽度');
+  check('固定画布高度（min(90vh, 540px) 或等效）',
     allCSS.includes('min(90vh, 540px)') || allCSS.includes('min(90vh,540px)'),
-    '缂哄皯鍥哄畾鐢诲竷楂樺害');
-  check('娣辫壊鑳屾櫙濉厖锛坰lides-wrap / background锛?,
+    '缺少固定画布高度');
+  check('深色背景填充（slides-wrap / background）',
     allCSS.includes('.slides-wrap') || content.includes('slides-wrap'),
-    '缂哄皯 .slides-wrap 瀹瑰櫒鎴栨繁鑹茶儗鏅?);
+    '缺少 .slides-wrap 容器或深色背景');
 
-  check('瀛楀彿浣跨敤 clamp()', allCSS.includes('clamp('),
-    '娌℃湁浣跨敤 clamp() 鍝嶅簲寮忓瓧鍙?);
+  check('字号使用 clamp()', allCSS.includes('clamp('),
+    '没有使用 clamp() 响应式字号');
 
-  console.log(`\n${CYAN}鈺愨晲鈺?绗?4 缁勶細鍔熻兘绯荤粺妫€鏌?鈺愨晲鈺?{RESET}`);
+  console.log(`\n${CYAN}═══ 第 4 组：功能系统检查 ═══${RESET}`);
 
-  check('鑷啓缈婚〉 JS 寮曟搸瀛樺湪', allJS.includes('goTo') || allJS.includes('current'),
-    '缈婚〉寮曟搸鏈壘鍒帮紝妫€鏌?JS 涓槸鍚︽湁 goTo/current 鍑芥暟');
-  check('搴曢儴瀵艰埅鏍忓瓨鍦紙nav-bar锛?, content.includes('nav-bar') || content.includes('navBtn'),
-    '缂哄皯搴曢儴瀵艰埅鏍?HTML');
-  check('椤电爜鏄剧ず瀛樺湪锛坧ageInfo锛?, content.includes('pageInfo') || content.includes('page-info'),
-    '缂哄皯椤电爜鏄剧ず鍏冪礌');
-  check('閿洏缈婚〉鏀寔锛圓rrowRight / ArrowLeft锛?, allJS.includes('ArrowRight') && allJS.includes('ArrowLeft'),
-    '缂哄皯閿洏鏂瑰悜閿炕椤?);
+  check('自写翻页 JS 引擎存在', allJS.includes('goTo') || allJS.includes('current'),
+    '翻页引擎未找到，检查 JS 中是否有 goTo/current 函数');
+  check('底部导航栏存在（nav-bar）', content.includes('nav-bar') || content.includes('navBtn'),
+    '缺少底部导航栏 HTML');
+  check('页码显示存在（pageInfo）', content.includes('pageInfo') || content.includes('page-info'),
+    '缺少页码显示元素');
+  check('键盘翻页支持（ArrowRight / ArrowLeft）', allJS.includes('ArrowRight') && allJS.includes('ArrowLeft'),
+    '缺少键盘方向键翻页');
 
-  console.log(`\n${CYAN}鈺愨晲鈺?绗?5 缁勶細寰俊閫傞厤妫€鏌?鈺愨晲鈺?{RESET}`);
+  console.log(`\n${CYAN}═══ 第 5 组：微信适配检查 ═══${RESET}`);
 
-  check('瑙︽懜楂樹寒绂佺敤锛?webkit-tap-highlight-color锛?, allCSS.includes('-webkit-tap-highlight-color'),
-    '缂哄皯 -webkit-tap-highlight-color');
-  check('绂佹瀛楀彿璋冩暣锛?webkit-text-size-adjust锛?, allCSS.includes('-webkit-text-size-adjust'),
-    '缂哄皯 -webkit-text-size-adjust');
-  check('瀹夊叏鍖洪€傞厤锛坰afe-area-inset-bottom锛?, allCSS.includes('safe-area-inset-bottom'),
-    '缂哄皯 iPhone X 搴曢儴瀹夊叏鍖洪€傞厤');
+  check('触摸高亮禁用（-webkit-tap-highlight-color）', allCSS.includes('-webkit-tap-highlight-color'),
+    '缺少 -webkit-tap-highlight-color');
+  check('禁止字号调整（-webkit-text-size-adjust）', allCSS.includes('-webkit-text-size-adjust'),
+    '缺少 -webkit-text-size-adjust');
+  check('安全区适配（safe-area-inset-bottom）', allCSS.includes('safe-area-inset-bottom'),
+    '缺少 iPhone X 底部安全区适配');
 
-  console.log(`\n${CYAN}鈺愨晲鈺?绗?6 缁勶細鎵撳嵃瀵煎嚭妫€鏌?鈺愨晲鈺?{RESET}`);
+  console.log(`\n${CYAN}═══ 第 6 组：打印导出检查 ═══${RESET}`);
 
-  check('@media print CSS 鍧?, allCSS.includes('@media print'),
-    '缂哄皯 @media print 鎵撳嵃鏍峰紡');
-  check('鎵撳嵃鏃跺睍寮€闅愯棌鍐呭', allCSS.includes('page-break-after'),
-    '鎵撳嵃 CSS 涓己灏?page-break-after');
+  check('@media print CSS 块', allCSS.includes('@media print'),
+    '缺少 @media print 打印样式');
+  check('打印时展开隐藏内容', allCSS.includes('page-break-after'),
+    '打印 CSS 中缺少 page-break-after');
 
-  console.log(`\n${CYAN}鈺愨晲鈺?绗?7 缁勶細浜や簰缁勪欢妫€鏌?鈺愨晲鈺?{RESET}`);
+  console.log(`\n${CYAN}═══ 第 7 组：交互组件检查 ═══${RESET}`);
 
   const hasFlipCard = hasCSSClass(content, 'flip-card');
   const hasRevealBox = hasCSSClass(content, 'reveal-box');
@@ -166,84 +177,85 @@ async function main() {
 
   // Only check CSS completeness for components actually used
   if (hasFlipCard) {
-    check('缈昏浆鍗?CSS 瀹屾暣锛坒lip-card-back overflow-y锛?,
+    check('翻转卡 CSS 完整（flip-card-back overflow-y）',
       allCSS.includes('flip-card-back') && (allCSS.includes('overflow-y: auto') || allCSS.includes('overflow-y:auto')),
-      'flip-card 宸蹭娇鐢ㄤ絾缂哄皯 overflow-y: auto 婊氬姩瀹归敊');
+      'flip-card 已使用但缺少 overflow-y: auto 滚动容错');
   } else {
-    console.log(`  ${YELLOW}鈼?{RESET} 缈昏浆鍗★紙鏈娇鐢紝璺宠繃妫€鏌ワ級`);
+    console.log(`  ${YELLOW}○${RESET} 翻转卡（未使用，跳过检查）`);
   }
 
   if (hasRevealBox) {
-    check('鐐瑰嚮鎻ず CSS 瀹屾暣锛坮eveal-back / shimmer锛?,
+    check('点击揭示 CSS 完整（reveal-back / shimmer）',
       allCSS.includes('reveal-back') && allCSS.includes('shimmer'),
-      'reveal-box 宸蹭娇鐢ㄤ絾缂哄皯 reveal-back 鎴?shimmer 鍔ㄧ敾');
+      'reveal-box 已使用但缺少 reveal-back 或 shimmer 动画');
   } else {
-    console.log(`  ${YELLOW}鈼?{RESET} 鐐瑰嚮鎻ず锛堟湭浣跨敤锛岃烦杩囨鏌ワ級`);
+    console.log(`  ${YELLOW}○${RESET} 点击揭示（未使用，跳过检查）`);
   }
 
   if (hasStepReveal) {
-    check('閫愭潯鎻ず CSS 瀹屾暣锛坰tep-reveal-item / visible锛?,
+    check('逐条揭示 CSS 完整（step-reveal-item / visible）',
       allCSS.includes('step-reveal-item') && allCSS.includes('.visible'),
-      'step-reveal 宸蹭娇鐢ㄤ絾缂哄皯 step-reveal-item 鎴?.visible');
+      'step-reveal 已使用但缺少 step-reveal-item 或 .visible');
   } else {
-    console.log(`  ${YELLOW}鈼?{RESET} 閫愭潯鎻ず锛堟湭浣跨敤锛岃烦杩囨鏌ワ級`);
+    console.log(`  ${YELLOW}○${RESET} 逐条揭示（未使用，跳过检查）`);
   }
 
   if (hasPollBox) {
-    check('鎶曠エ缁勪欢 CSS 瀹屾暣锛坧oll / poll-result锛?,
+    check('投票组件 CSS 完整（poll / poll-result）',
       allCSS.includes('.poll') && allCSS.includes('poll-result'),
-      'poll-box 宸蹭娇鐢ㄤ絾缂哄皯 poll 鎴?poll-result 鏍峰紡');
+      'poll-box 已使用但缺少 poll 或 poll-result 样式');
   } else {
-    console.log(`  ${YELLOW}鈼?{RESET} 鎶曠エ缁勪欢锛堟湭浣跨敤锛岃烦杩囨鏌ワ級`);
+    console.log(`  ${YELLOW}○${RESET} 投票组件（未使用，跳过检查）`);
   }
 
-  // 浜や簰瑙ｈ€︽鏌?  const hasStopPropagation = allJS.includes('stopPropagation') || content.includes('stopPropagation');
+  // 交互解耦检查
+  const hasStopPropagation = allJS.includes('stopPropagation') || content.includes('stopPropagation');
   if (hasFlipCard || hasRevealBox || hasPollBox) {
-    check('浜や簰缁勪欢涓庣炕椤佃В鑰︼紙event.stopPropagation锛?, hasStopPropagation,
-      '浜や簰缁勪欢宸蹭娇鐢ㄤ絾缂哄皯 event.stopPropagation() 瑙ｈ€?);
+    check('交互组件与翻页解耦（event.stopPropagation）', hasStopPropagation,
+      '交互组件已使用但缺少 event.stopPropagation() 解耦');
   }
 
-  console.log(`\n${CYAN}鈺愨晲鈺?绗?8 缁勶細鍔ㄧ敾绯荤粺妫€鏌?鈺愨晲鈺?{RESET}`);
+  console.log(`\n${CYAN}═══ 第 8 组：动画系统检查 ═══${RESET}`);
 
   const KEYFRAMES = ['floatBubble', 'pulseGlow', 'pulse', 'shimmer', 'fadeInStagger', 'countUp', 'closingFadeIn'];
   const missingKF = KEYFRAMES.filter(kf => !allCSS.includes(`@keyframes ${kf}`) && !allCSS.includes(`@keyframes${kf}`));
-  check(`鍔ㄧ敾 keyframes 瀹屾暣锛?{KEYFRAMES.length} 涓級`, missingKF.length === 0,
-    missingKF.length > 0 ? `缂哄皯: ${missingKF.join(', ')}` : '');
+  check(`动画 keyframes 完整（${KEYFRAMES.length} 个）`, missingKF.length === 0,
+    missingKF.length > 0 ? `缺少: ${missingKF.join(', ')}` : '');
 
   const STAGGER_RULES = ['.card', '.trend-card', '.reason-card'];
   const missingStagger = STAGGER_RULES.filter(s => !allCSS.includes(`${s}:nth-child`));
   // Stagger is recommended but not required if those components aren't used
   if (missingStagger.length === STAGGER_RULES.length) {
-    console.log(`  ${YELLOW}鈼?{RESET} stagger 浜ら敊鍏ュ満瑙勫垯锛堟湭妫€娴嬪埌鍗＄墖缁勪欢锛岃烦杩囨鏌ワ級`);
+    console.log(`  ${YELLOW}○${RESET} stagger 交错入场规则（未检测到卡片组件，跳过检查）`);
   } else if (missingStagger.length > 0) {
-    check(`stagger 瑙勫垯瀹屾暣锛?{STAGGER_RULES.length} 缁勶級`, false,
-      `缂哄皯: ${missingStagger.join(', ')} 鐨?stagger 瑙勫垯`);
+    check(`stagger 规则完整（${STAGGER_RULES.length} 组）`, false,
+      `缺少: ${missingStagger.join(', ')} 的 stagger 规则`);
   } else {
-    check(`stagger 浜ら敊鍏ュ満瑙勫垯瀹屾暣锛?{STAGGER_RULES.length} 缁勶級`, true);
+    check(`stagger 交错入场规则完整（${STAGGER_RULES.length} 组）`, true);
   }
 
-  // 鈹€鈹€鈹€ 姹囨€?鈹€鈹€鈹€
+  // ─── 汇总 ───
   const total = passCount + failCount;
-  console.log(`\n${BOLD}鈺愨晲鈺?鏍￠獙缁撴灉 鈺愨晲鈺?{RESET}`);
-  console.log(`  ${GREEN}閫氳繃: ${passCount}${RESET}`);
-  console.log(`  ${RED}澶辫触: ${failCount}${RESET}`);
-  console.log(`  鎬昏: ${total}\n`);
+  console.log(`\n${BOLD}═══ 校验结果 ═══${RESET}`);
+  console.log(`  ${GREEN}通过: ${passCount}${RESET}`);
+  console.log(`  ${RED}失败: ${failCount}${RESET}`);
+  console.log(`  总计: ${total}\n`);
 
   if (failCount > 0) {
-    console.log(`${RED}${BOLD}鉂?鏍￠獙鏈€氳繃 鈥?浠ヤ笅椤圭洰闇€瑕佷慨澶嶏細${RESET}\n`);
+    console.log(`${RED}${BOLD}❌ 校验未通过 — 以下项目需要修复：${RESET}\n`);
     failures.forEach((f, i) => {
       console.log(`  ${RED}${i + 1}.${RESET} ${f.name}`);
-      if (f.detail) console.log(`     ${YELLOW}鈫?${f.detail}${RESET}`);
+      if (f.detail) console.log(`     ${YELLOW}→ ${f.detail}${RESET}`);
     });
     console.log('');
     process.exit(1);
   } else {
-    console.log(`${GREEN}${BOLD}鉁?鍏ㄩ儴閫氳繃锛佸彲浠ヤ氦浠樸€?{RESET}\n`);
+    console.log(`${GREEN}${BOLD}✅ 全部通过！可以交付。${RESET}\n`);
     process.exit(0);
   }
 }
 
 main().catch(err => {
-  console.error(`${RED}鏍￠獙鑴氭湰寮傚父: ${err.message}${RESET}`);
+  console.error(`${RED}校验脚本异常: ${err.message}${RESET}`);
   process.exit(2);
 });
