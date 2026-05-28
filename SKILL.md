@@ -854,7 +854,6 @@ P0 = 必须过，否则 PPT 没法用 | P1 = 应该过，否则掉档次 | P2 = 
 - 女娲 Skill（`C:/Users/admin/nuwa-skill/SKILL.md`）：人物蒸馏的分阶段结构参考
 - guizang-ppt-skill（`~/.workbuddy/skills-marketplace/skills/guizang-ppt-skill/`）：布局骨架、检查分级、叙事弧等工程化方法论参考
 - frontend-slides（17.5k Star）：内容密度上限约束、反AI审美策略、mood-based风格选择等实践参考
-- 倪云华离线版 HTML PPT 经验：`C:/Users/admin/Downloads/html_ppt_offline_experience.md` — 自写 JS 翻页系统 + 固定画布 + 微信适配的完整踩坑记录，v0.5.0 架构核心参考
 - TED 演讲视觉规范：https://blog.ted.com/（公开演讲风格参考）
 - McKinsey 幻灯片规范：《McKinsey Presentation Principles》（专业汇报风格参考）
 
