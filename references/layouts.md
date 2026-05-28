@@ -1,15 +1,20 @@
-# 甯冨眬楠ㄦ灦搴?
-> AI 鐢熸垚 PPT 鏃讹紝浠庤繖閲岄€夋ā鏉匡紝濉┖鍗冲彲銆備笉瑕佷粠闆舵墜鍐?HTML銆?
-姣忕楠ㄦ灦鍖呭惈锛氱敤閫旇鏄庛€佸畬鏁?HTML銆佸繀闇€ CSS 绫诲悕娓呭崟銆侫I 鍦?Phase 3.1 蹇呴』鍏堢敤绫诲悕棰勬纭鎵€鏈?CSS 绫诲凡瀹氫箟锛屽啀濉叆鍐呭銆?
+# 布局骨架库
+
+> AI 生成 PPT 时，从这里选模板，填空即可。不要从零手写 HTML。
+
+每种骨架包含：用途说明、完整 HTML、必需 CSS 类名清单。AI 在 Phase 3.1 必须先用类名预检确认所有 CSS 类已定义，再填入内容。
+
 ---
 
-> **v0.5.0 璧峰凡鍗囩骇涓鸿嚜鍐?JS 绂荤嚎缈婚〉绯荤粺銆備互涓嬪叏閮ㄦā鏉垮熀浜?`.slide` div + 鍐呰仈 CSS/JS锛岄浂澶栭儴渚濊禆锛屽井淇＄洿鎺ュ彲鐢ㄣ€?*
+> **v0.5.0 起已升级为自写 JS 离线翻页系统。以下全部模板基于 `.slide` div + 内联 CSS/JS，零外部依赖，微信直接可用。**
 
 ---
 
-## 绂荤嚎鐗?HTML 杈撳嚭妯℃澘锛坴0.5.0+锛?
-鐐间腹鐐?v0.5.0 璧凤紝榛樿杈撳嚭**闆跺閮ㄤ緷璧栫殑绂荤嚎鐗?HTML**锛屾棤闇€ CDN锛屾棤闇€ Google Fonts锛屽井淇＄洿鎺ユ墦寮€鍗崇敤銆?
-### 瀹屾暣 HTML 楠ㄦ灦
+## 离线版 HTML 输出模板（v0.5.0+）
+
+炼丹炉 v0.5.0 起，默认输出**零外部依赖的离线版 HTML**，无需 CDN，无需 Google Fonts，微信直接打开即用。
+
+### 完整 HTML 骨架
 
 ```html
 <!DOCTYPE html>
@@ -19,7 +24,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>{{TITLE}}</title>
 <style>
-/* ===== 鍏ㄥ眬閲嶇疆 + 绯荤粺瀛椾綋 ===== */
+/* ===== 全局重置 + 系统字体 ===== */
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
   --color-accent: #FF6D00;
@@ -43,7 +48,7 @@ html,body{
   -webkit-font-smoothing:antialiased;
 }
 
-/* ===== 骞荤伅鐗囧鍣?===== */
+/* ===== 幻灯片容器 ===== */
 .slides-wrap{
   width:100%;height:100%;position:relative;overflow:hidden;
   background:var(--color-bg);
@@ -73,7 +78,7 @@ html,body{
   z-index:1;
 }
 
-/* ===== 娣辫壊骞曞皝椤碉紙绔犺妭杩囨浮锛?===== */
+/* ===== 深色幕封页（章节过渡） ===== */
 .slide.section-header{
   background:linear-gradient(135deg,var(--color-accent) 0%,#E65100 100%);
   color:#fff;
@@ -84,14 +89,14 @@ html,body{
   position:absolute;right:3.5vw;top:1vh;line-height:1;
 }
 
-/* ===== 灏侀潰椤?===== */
+/* ===== 封面页 ===== */
 .slide.cover{
   background:linear-gradient(135deg,var(--color-accent) 0%,#E65100 100%);
   color:#fff;justify-content:center;align-items:flex-start;padding-top:12vh;
 }
 .slide.cover *{color:#fff!important}
 
-/* ===== 缁撳熬鑷磋阿 ===== */
+/* ===== 结尾致谢 ===== */
 .slide.closing{
   display:flex;flex-direction:column;justify-content:center;align-items:center;
   text-align:center;
@@ -100,7 +105,7 @@ html,body{
 }
 .slide.closing *{color:#fff!important}
 
-/* ===== 鍝嶅簲寮忓瓧鍙?===== */
+/* ===== 响应式字号 ===== */
 .slide h1{font-size:clamp(1.8em,4.5vw,2.6em);font-weight:700;line-height:1.15;margin-bottom:.25em}
 .slide h2{font-size:clamp(1.35em,3vw,1.9em);font-weight:700;line-height:1.3;margin-bottom:.3em}
 .slide h3{font-size:clamp(1em,2.2vw,1.25em);font-weight:500;color:var(--grey);margin-bottom:.4em}
@@ -108,7 +113,7 @@ html,body{
 .slide li{font-size:clamp(.82em,1.7vw,.92em);line-height:1.65}
 .slide ul{list-style:none;padding:0}
 
-/* ===== 瀹炵敤缁勪欢 ===== */
+/* ===== 实用组件 ===== */
 .divider{height:2px;background:linear-gradient(90deg,var(--color-accent),transparent);margin:12px 0;border:none}
 .chip{display:inline-block;padding:4px 14px;border-radius:16px;font-size:.75em;font-weight:500;margin:3px 4px 3px 0}
 .chip-accent{background:#FFF3E0;color:var(--color-accent)}
@@ -120,7 +125,7 @@ html,body{
 .slide-tag{position:absolute;bottom:60px;right:4vw;font-size:.6em;color:var(--color-border)}
 .big-number{font-size:clamp(2em,6vw,2.8em);font-weight:700;color:var(--color-accent);line-height:1}
 
-/* ===== 鍗＄墖 ===== */
+/* ===== 卡片 ===== */
 .card{background:var(--color-card);border:1px solid var(--color-border);border-radius:8px;padding:12px 16px;margin:8px 0}
 .card-accent{border-left:4px solid var(--color-accent)}
 .card-teal{border-left:4px solid var(--teal)}
@@ -128,21 +133,21 @@ html,body{
 .card-red{border-left:4px solid var(--red)}
 .card-purple{border-left:4px solid var(--purple)}
 
-/* ===== 寮曠敤鍧?===== */
+/* ===== 引用块 ===== */
 .quote-box{background:#FFF3E0;border-left:4px solid var(--color-accent);border-radius:0 8px 8px 0;padding:12px 16px;margin:12px 0;font-style:italic;font-size:clamp(.8em,2vw,.9em);line-height:1.6}
 
-/* ===== 缃戞牸 ===== */
+/* ===== 网格 ===== */
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px}
 .three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px}
 .four-col{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-top:10px}
 
-/* ===== 琛ㄦ牸 ===== */
+/* ===== 表格 ===== */
 table{width:100%;border-collapse:collapse;font-size:clamp(.7em,1.6vw,.78em);margin:10px 0}
 th{background:var(--color-accent);color:#fff;padding:8px 10px;text-align:left;font-weight:500}
 td{padding:8px 10px;border-bottom:1px solid var(--color-border)}
 tr:nth-child(even) td{background:var(--color-card)}
 
-/* ===== 搴曢儴瀵艰埅鏍?===== */
+/* ===== 底部导航栏 ===== */
 .nav-bar{
   position:fixed;bottom:0;left:0;right:0;
   display:flex;justify-content:space-between;align-items:center;
@@ -165,7 +170,7 @@ tr:nth-child(even) td{background:var(--color-card)}
 .nav-btn:disabled{opacity:.3;cursor:default}
 .page-info{font-size:14px;color:#888;min-width:60px;text-align:center}
 
-/* ===== 鎵撳嵃鏍峰紡 ===== */
+/* ===== 打印样式 ===== */
 @media print{
   html,body{background:#fff;overflow:visible}
   .slides-wrap{overflow:visible;background:#fff}
@@ -178,25 +183,25 @@ tr:nth-child(even) td{background:var(--color-card)}
   .slide-tag{display:none!important}
 }
 </style>
-<!-- 浠ヤ笅鎻掑叆楠ㄦ灦/缁勪欢/浜や簰/鍔ㄧ敾鐨勫畬鏁?CSS锛堜粠鏈枃浠跺搴旂珷鑺傚鍒讹級 -->
+<!-- 以下插入骨架/组件/交互/动画的完整 CSS（从本文件对应章节复制） -->
 </head>
 <body>
 <div class="slides-wrap">
 
-<!-- ====== 骞荤伅鐗囧唴瀹瑰尯锛堥€愰〉濉厖锛?====== -->
-<!-- 姣忛〉鐢?<div class="slide [棰濆绫籡"> 鍖呰９ -->
+<!-- ====== 幻灯片内容区（逐页填充） ====== -->
+<!-- 每页用 <div class="slide [额外类]"> 包裹 -->
 
 </div><!-- .slides-wrap -->
 
-<!-- 搴曢儴瀵艰埅鏍?-->
+<!-- 底部导航栏 -->
 <div class="nav-bar">
-  <button class="nav-btn" id="prevBtn" disabled>鈼€</button>
+  <button class="nav-btn" id="prevBtn" disabled>◀</button>
   <span class="page-info" id="pageInfo"></span>
-  <button class="nav-btn" id="nextBtn">鈻?/button>
+  <button class="nav-btn" id="nextBtn">▶</button>
 </div>
 
 <script>
-/* ===== 鑷啓骞荤伅鐗囧紩鎿庯紙~50琛岋紝闆朵緷璧栵級 ===== */
+/* ===== 自写幻灯片引擎（~50行，零依赖） ===== */
 (function(){
   var slides=document.querySelectorAll('.slide');
   var total=slides.length;
@@ -239,7 +244,7 @@ tr:nth-child(even) td{background:var(--color-card)}
   prevBtn.onclick=function(){goTo(current-1,-1)};
   nextBtn.onclick=function(){goTo(current+1,1)};
 
-  /* 閿洏 */
+  /* 键盘 */
   document.addEventListener('keydown',function(e){
     if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' '){
       e.preventDefault();goTo(current+1,1);
@@ -248,7 +253,7 @@ tr:nth-child(even) td{background:var(--color-card)}
     }
   });
 
-  /* 瑙︽懜婊戝姩 */
+  /* 触摸滑动 */
   document.addEventListener('touchstart',function(e){
     if(e.touches.length===1){
       touchStartX=e.touches[0].clientX;
@@ -266,7 +271,7 @@ tr:nth-child(even) td{background:var(--color-card)}
     }
   },{passive:true});
 
-  /* 榧犳爣婊氳疆 */
+  /* 鼠标滚轮 */
   var wheelTimer=null;
   document.addEventListener('wheel',function(e){
     e.preventDefault();
@@ -276,7 +281,7 @@ tr:nth-child(even) td{background:var(--color-card)}
     else if(e.deltaY<0)goTo(current-1,-1);
   },{passive:false});
 
-  /* 鍒濆鍖栵細鏄剧ず绗竴椤?*/
+  /* 初始化：显示第一页 */
   if(total>0)goTo(0,0);
 })();
 </script>
@@ -284,39 +289,44 @@ tr:nth-child(even) td{background:var(--color-card)}
 </html>
 ```
 
-### 鍏抽敭瑙勮寖
+### 关键规范
 
-1. **闆跺閮ㄤ緷璧?*锛氭墍鏈?CSS/JS 鍐呰仈锛屼笉浣跨敤浠讳綍 CDN 鎴栧閮ㄥ瓧浣?2. **鍥哄畾鐢诲竷**锛?60脳540锛?6:9锛夛紝娣辫壊鑳屾櫙濉厖绌虹櫧锛屾ā鎷?PPT 鏀炬槧鏁堟灉
-3. **绯荤粺瀛椾綋**锛歚PingFang SC / Microsoft YaHei / Helvetica Neue / sans-serif`
-4. **鍝嶅簲寮忓瓧鍙?*锛氬叏閮ㄤ娇鐢?`clamp()` 涓夋。缂╂斁
-5. **涓夐€氶亾瀵艰埅**锛氶敭鐩樻柟鍚戦敭 + 瑙︽懜婊戝姩 + 榧犳爣婊氳疆锛?00ms闃叉姈锛?6. **寰俊鍙敤**锛氱鐢ㄨЕ鎽搁珮浜€佺姝㈠瓧鍙疯皟鏁淬€佸畨鍏ㄥ尯閫傞厤
-7. **鍙墦鍗?*锛歚@media print` 灏嗗够鐏墖灞曞紑涓哄叏椤垫樉绀?
-### 椤甸潰缁撴瀯绾﹀畾
+1. **零外部依赖**：所有 CSS/JS 内联，不使用任何 CDN 或外部字体
+2. **固定画布**：960×540（16:9），深色背景填充空白，模拟 PPT 放映效果
+3. **系统字体**：`PingFang SC / Microsoft YaHei / Helvetica Neue / sans-serif`
+4. **响应式字号**：全部使用 `clamp()` 三档缩放
+5. **三通道导航**：键盘方向键 + 触摸滑动 + 鼠标滚轮（400ms防抖）
+6. **微信可用**：禁用触摸高亮、禁止字号调整、安全区适配
+7. **可打印**：`@media print` 将幻灯片展开为全页显示
+
+### 页面结构约定
 
 ```html
-<!-- 灏侀潰椤?-->
+<!-- 封面页 -->
 <div class="slide cover active">...</div>
 
-<!-- 绔犺妭骞曞皝 -->
+<!-- 章节幕封 -->
 <div class="slide section-header">
   <div class="section-num">01</div>
   ...
 </div>
 
-<!-- 鏅€氬唴瀹归〉 -->
+<!-- 普通内容页 -->
 <div class="slide">
-  <h2>鏍囬</h2>
+  <h2>标题</h2>
   <div class="divider"></div>
   ...
-  <div class="slide-tag">椤电爜 / 鎬婚〉鏁?/div>
+  <div class="slide-tag">页码 / 总页数</div>
 </div>
 
-<!-- 缁撳熬鑷磋阿 -->
+<!-- 结尾致谢 -->
 <div class="slide closing">...</div>
 ```
 
-### 宓屽叆浜や簰缁勪欢鐨勬敞鎰忎簨椤?
-浜や簰缁勪欢锛坒lip-card銆乺eveal-box銆乻tep-reveal锛夌殑鐐瑰嚮浜嬩欢涓庣炕椤电郴缁?*瀹屽叏瑙ｈ€?*鈥斺€旂偣鍑诲崱鐗囧唴閮ㄤ笉浼氳Е鍙戠炕椤点€傚彧闇€鍦ㄧ粍浠剁殑 onclick 涓皟鐢?`event.stopPropagation()` 鍗冲彲銆?
+### 嵌入交互组件的注意事项
+
+交互组件（flip-card、reveal-box、step-reveal）的点击事件与翻页系统**完全解耦**——点击卡片内部不会触发翻页。只需在组件的 onclick 中调用 `event.stopPropagation()` 即可。
+
 ```html
 <div class="flip-card" onclick="event.stopPropagation();this.classList.toggle('flipped')">
 ```
